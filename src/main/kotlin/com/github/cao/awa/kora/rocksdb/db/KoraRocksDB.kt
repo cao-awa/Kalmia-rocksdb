@@ -14,35 +14,39 @@ import java.nio.charset.StandardCharsets
 class KoraRocksDB(val database: RocksDB, private val name: String) {
     companion object {
         private val LOGGER: Logger = LogManager.getLogger("KoraRocksDB")
-        private var REAL_INSTANCE: MutableMap<String, KoraRocksDB>? = mutableMapOf()
-        private val INSTANCE: Map<String, KoraRocksDB>
-            get() = REAL_INSTANCE!!
+        private var REAL_INSTANCES: MutableMap<String, KoraRocksDB>? = mutableMapOf()
+        private val INSTANCES: Map<String, KoraRocksDB>
+            get() = REAL_INSTANCES!!
         val TRUE: ByteArray = byteArrayOf(0x01)
         val FALSE: ByteArray = byteArrayOf(0x00)
 
         fun init() {
             registerCleaner("kora-rocksdb") {
                 LOGGER.info("Closing all RocksDB...")
-                REAL_INSTANCE?.forEach { (_, db) ->
+                REAL_INSTANCES?.forEach { (_, db) ->
                     db.close()
                 }
-                REAL_INSTANCE?.clear()
-                REAL_INSTANCE = null
+                REAL_INSTANCES?.clear()
+                REAL_INSTANCES = null
             }
         }
 
         fun open(name: String): KoraRocksDB {
-            val file = File("databases/$name")
-            file.parentFile.mkdirs()
-            val db = KoraRocksDB(RocksDB.open(file.absolutePath), name)
-            REAL_INSTANCE?.put(name, db)
-            return db
+            if (REAL_INSTANCES?.get(name) == null) {
+                val file = File("databases/$name")
+                file.parentFile.mkdirs()
+                val db = KoraRocksDB(RocksDB.open(file.absolutePath), name)
+                REAL_INSTANCES?.put(name, db)
+                return db
+            } else {
+                return INSTANCES.get(name)!!
+            }
         }
 
         private fun close(name: String) {
-            INSTANCE[name]?.let {
+            INSTANCES[name]?.let {
                 it.database.close()
-                REAL_INSTANCE?.remove(name)
+                REAL_INSTANCES?.remove(name)
             }
         }
     }
@@ -56,53 +60,58 @@ class KoraRocksDB(val database: RocksDB, private val name: String) {
     }
 
     inline operator fun <reified T> get(key: String): T? {
-        val data = this.database[key.toByteArray(StandardCharsets.UTF_8)]
-        return when(T::class) {
-            String::class -> String(data, StandardCharsets.UTF_8)
-            Boolean::class -> data[0].toInt() == 0x01
-            Byte::class -> data[0]
-            Char::class -> Base256.tagFromBuf(data)
-            Short::class -> Base256.tagFromBuf(data)
-            Int::class -> Base256.intFromBuf(data)
-            Long::class -> Base256.longFromBuf(data)
-            else -> {
-                if (T::class.isData) {
-                    JSONCodec.decode<T>(
-                        JSONBinaryDecoder.decodeObject(
-                            data
+        synchronized(this) {
+            val data = this.database[key.toByteArray(StandardCharsets.UTF_8)]
+            return when (T::class) {
+                String::class -> String(data, StandardCharsets.UTF_8)
+                Boolean::class -> data[0].toInt() == 0x01
+                Byte::class -> data[0]
+                Char::class -> Base256.tagFromBuf(data)
+                Short::class -> Base256.tagFromBuf(data)
+                Int::class -> Base256.intFromBuf(data)
+                Long::class -> Base256.longFromBuf(data)
+                else -> {
+                    if (T::class.isData) {
+                        JSONCodec.decode<T>(
+                            JSONBinaryDecoder.decodeObject(
+                                data
+                            )
                         )
-                    )
-                } else {
-                    throw IllegalArgumentException("Unsupported type '${T::class}', it must be basic types or data class")
+                    } else {
+                        throw IllegalArgumentException("Unsupported type '${T::class}', it must be basic types or data class")
+                    }
                 }
-            }
-        } as? T
+            } as? T
+        }
     }
 
     inline operator fun <reified T : Any> set(key: String, value: T) {
-        val key = key.toByteArray(StandardCharsets.UTF_8)
-        if (T::class.isData) {
-            val any = JSONCodec.encode<T>(value)
-            this.database.put(
-                key,
-                JSONBinaryEncoder.encode(any)
-            )
-        } else {
-            when (value) {
-                is String -> this.database.put(key, value.toByteArray(StandardCharsets.UTF_8))
-                is Boolean -> {
-                    if (value) {
-                        this.database.put(key,TRUE)
-                    } else {
-                        this.database.put(key, FALSE)
+        synchronized(this) {
+            val key = key.toByteArray(StandardCharsets.UTF_8)
+            if (T::class.isData) {
+                val any = JSONCodec.encode<T>(value)
+                this.database.put(
+                    key,
+                    JSONBinaryEncoder.encode(any)
+                )
+            } else {
+                when (value) {
+                    is String -> this.database.put(key, value.toByteArray(StandardCharsets.UTF_8))
+                    is Boolean -> {
+                        if (value) {
+                            this.database.put(key, TRUE)
+                        } else {
+                            this.database.put(key, FALSE)
+                        }
                     }
+
+                    is Byte -> this.database.put(key, byteArrayOf(value))
+                    is Char -> this.database.put(key, Base256.tagToBuf(value.code))
+                    is Short -> this.database.put(key, Base256.tagToBuf(value.toInt()))
+                    is Int -> this.database.put(key, Base256.intToBuf(value))
+                    is Long -> this.database.put(key, Base256.longToBuf(value))
+                    else -> throw IllegalArgumentException("Unsupported type '${T::class}', it must be basic types or data class")
                 }
-                is Byte -> this.database.put(key, byteArrayOf(value))
-                is Char -> this.database.put(key, Base256.tagToBuf(value.code))
-                is Short -> this.database.put(key, Base256.tagToBuf(value.toInt()))
-                is Int -> this.database.put(key, Base256.intToBuf(value))
-                is Long -> this.database.put(key, Base256.longToBuf(value))
-                else -> throw IllegalArgumentException("Unsupported type '${T::class}', it must be basic types or data class")
             }
         }
     }
