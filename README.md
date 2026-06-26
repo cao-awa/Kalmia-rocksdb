@@ -1,4 +1,4 @@
-# Kora-redis
+# Kora-rocksdb
 A Rocks DB plugin for Kora webserver.
 
 ## Usage
@@ -15,19 +15,19 @@ dependencies {
 }
 ```
 
-For the versions, see [JitPack](https://jitpack.io/#cao-awa/Kora-redis).
+For the versions, see [JitPack](https://jitpack.io/#cao-awa/Kora-rocksdb).
 
-And use redis client in your code:
+And use Rocks DB in your code:
 ```kotlin
-import com.github.cao.awa.kora.rocksdb.db.KoraRedisClient
+import com.github.cao.awa.kora.rocksdb.db.KoraRocksDB
 
 object Test {
     @JvmStatic
     fun entry() {
-        val db = KoraRedisClient.open(File(""))
-        // Set data to redis.
+        val db = KoraRocksDB.open(File("db-name"))
+        // Set data to rocks db.
         db["test-key"] = "test"
-        // Get data from redis.
+        // Get data from rocks db.
         println(db.getString("test-key"))
     }
 }

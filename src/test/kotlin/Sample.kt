@@ -4,9 +4,9 @@ object Test {
     @JvmStatic
     fun entry() {
         val client = KoraRocksDB.open("test")
-        // Set data to redis.
+        // Set data to rocks db.
         client["test-key"] = "test"
-        // Get data from redis.
+        // Get data from rocks db.
         println(client.getString("test-key"))
     }
 
