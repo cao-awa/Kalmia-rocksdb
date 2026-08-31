@@ -1,4 +1,4 @@
 {
-    "name": "kora-rocksdb",
-    "entrypoint": "com.github.cao.awa.kora.rocksdb.entrypoint.RocksDBPluginBootstrap#init"
+    "name": "kalmia-rocksdb",
+    "entrypoint": "com.github.cao.awa.kalmia.rocksdb.entrypoint.RocksDBPluginBootstrap#init"
 }

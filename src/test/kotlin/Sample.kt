@@ -1,9 +1,9 @@
-import com.github.cao.awa.kora.rocksdb.db.KoraRocksDB
+import com.github.cao.awa.kalmia.rocksdb.db.KalmiaRocksDB
 
 object Test {
     @JvmStatic
     fun entry() {
-        val client = KoraRocksDB.open("test")
+        val client = KalmiaRocksDB.open("test")
         // Set data to rocks db.
         client["test-key"] = "test"
         // Get data from rocks db.

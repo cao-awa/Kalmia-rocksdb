@@ -1,5 +1,5 @@
-# Kora-rocksdb
-A Rocks DB plugin for Kora webserver.
+# Kalmia-rocksdb
+A Rocks DB plugin for Kalmia webserver.
 
 ## Usage
 Add dependencies first: 
@@ -11,20 +11,20 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.cao-awa:Kora-rocksdb:{version}'
+    implementation 'com.github.cao-awa:Kalmia-rocksdb:{version}'
 }
 ```
 
-For the versions, see [JitPack](https://jitpack.io/#cao-awa/Kora-rocksdb).
+For the versions, see [JitPack](https://jitpack.io/#cao-awa/Kalmia-rocksdb).
 
 And use Rocks DB in your code:
 ```kotlin
-import com.github.cao.awa.kora.rocksdb.db.KoraRocksDB
+import com.github.cao.awa.kalmia.rocksdb.db.KalmiaRocksDB
 
 object Test {
     @JvmStatic
     fun entry() {
-        val db = KoraRocksDB.open(File("db-name"))
+        val db = KalmiaRocksDB.open(File("db-name"))
         // Set data to rocks db.
         db["test-key"] = "test"
         // Get data from rocks db.
@@ -33,14 +33,14 @@ object Test {
 }
 ```
 
-In produce environment, you need put the ``kora-rocksdb`` jar to ``libs/`` directory and declare entrypoint:
+In produce environment, you need put the ``kalmia-rocksdb`` jar to ``libs/`` directory and declare entrypoint:
 ```json
 {
     "entrypoint": [
-        "kora-rocksdb",
+        "kalmia-rocksdb",
         "com.yourservice.xxx.ServiceEntrypoint#entry"
     ]
 }
 ```
 
-For entrypoint, please see [Kora's document](https://github.com/cao-awa/Kora/tree/main/docs/entrypoint).
+For entrypoint, please see [Kalmia's document](https://github.com/cao-awa/Kalmia/tree/main/docs/entrypoint).

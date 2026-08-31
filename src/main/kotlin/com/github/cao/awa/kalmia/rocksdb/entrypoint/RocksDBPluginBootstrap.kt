@@ -1,6 +1,6 @@
-package com.github.cao.awa.kora.rocksdb.entrypoint
+package com.github.cao.awa.kalmia.rocksdb.entrypoint
 
-import com.github.cao.awa.kora.rocksdb.db.KoraRocksDB
+import com.github.cao.awa.kalmia.rocksdb.db.KalmiaRocksDB
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
@@ -11,6 +11,6 @@ object RocksDBPluginBootstrap {
     fun init() {
         LOGGER.info("Initializing rocks DB")
 
-        KoraRocksDB.init()
+        KalmiaRocksDB.init()
     }
 }

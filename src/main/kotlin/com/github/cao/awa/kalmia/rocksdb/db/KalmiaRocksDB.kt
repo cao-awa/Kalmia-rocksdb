@@ -1,27 +1,27 @@
-package com.github.cao.awa.kora.rocksdb.db
+package com.github.cao.awa.kalmia.rocksdb.db
 
 import com.github.cao.awa.cason.binary.JSONBinaryDecoder
 import com.github.cao.awa.cason.binary.JSONBinaryEncoder
 import com.github.cao.awa.cason.codec.JSONCodec
 import com.github.cao.awa.cason.util.math.Base256
-import com.github.cao.awa.kora.plugin.registerCleaner
+import com.github.cao.awa.kalmia.plugin.registerCleaner
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 import org.rocksdb.RocksDB
 import java.io.File
 import java.nio.charset.StandardCharsets
 
-class KoraRocksDB(val database: RocksDB, private val name: String) {
+class KalmiaRocksDB(val database: RocksDB, private val name: String) {
     companion object {
-        private val LOGGER: Logger = LogManager.getLogger("KoraRocksDB")
-        private var REAL_INSTANCES: MutableMap<String, KoraRocksDB>? = mutableMapOf()
-        private val INSTANCES: Map<String, KoraRocksDB>
+        private val LOGGER: Logger = LogManager.getLogger("KalmiaRocksDB")
+        private var REAL_INSTANCES: MutableMap<String, KalmiaRocksDB>? = mutableMapOf()
+        private val INSTANCES: Map<String, KalmiaRocksDB>
             get() = REAL_INSTANCES!!
         val TRUE: ByteArray = byteArrayOf(0x01)
         val FALSE: ByteArray = byteArrayOf(0x00)
 
         fun init() {
-            registerCleaner("kora-rocksdb") {
+            registerCleaner("kalmia-rocksdb") {
                 LOGGER.info("Closing all RocksDB...")
                 REAL_INSTANCES?.forEach { (_, db) ->
                     db.close()
@@ -31,11 +31,11 @@ class KoraRocksDB(val database: RocksDB, private val name: String) {
             }
         }
 
-        fun open(name: String): KoraRocksDB {
+        fun open(name: String): KalmiaRocksDB {
             if (REAL_INSTANCES?.get(name) == null) {
                 val file = File("databases/$name")
                 file.parentFile.mkdirs()
-                val db = KoraRocksDB(RocksDB.open(file.absolutePath), name)
+                val db = KalmiaRocksDB(RocksDB.open(file.absolutePath), name)
                 REAL_INSTANCES?.put(name, db)
                 return db
             } else {
