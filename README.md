@@ -43,4 +43,6 @@ In produce environment, you need put the ``kalmia-rocksdb`` jar to ``libs/`` dir
 }
 ```
 
+And put [RocksDB jar](https://mvnrepository.com/artifact/org.rocksdb/rocksdbjni/10.10.1.1) to ``libs/`` directory too.
+
 For entrypoint, please see [Kalmia's document](https://github.com/cao-awa/Kalmia/tree/main/docs/entrypoint).

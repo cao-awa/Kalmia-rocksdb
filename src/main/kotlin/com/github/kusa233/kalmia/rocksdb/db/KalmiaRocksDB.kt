@@ -1,8 +1,9 @@
 package com.github.kusa233.kalmia.rocksdb.db
 
-import com.github.cao.awa.cason.binary.JSONBinaryDecoder
-import com.github.cao.awa.cason.binary.JSONBinaryEncoder
-import com.github.cao.awa.cason.codec.JSONCodec
+import com.github.cao.awa.cason.binary.decoder.JSONBinaryDecoder
+import com.github.cao.awa.cason.binary.encoder.JSONBinaryEncoder
+import com.github.cao.awa.cason.codec.decoder.JSONDecoder
+import com.github.cao.awa.cason.codec.encoder.JSONEncoder
 import com.github.cao.awa.cason.util.math.Base256
 import com.github.kusa233.kalmia.plugin.registerCleaner
 import org.apache.logging.log4j.LogManager
@@ -171,11 +172,12 @@ class KalmiaRocksDB(val database: RocksDB, private val name: String) {
                 Long::class -> Base256.longFromBuf(data)
                 else -> {
                     if (T::class.isData) {
-                        JSONCodec.decode<T>(
+                        JSONDecoder.decodeDataClass(
                             JSONBinaryDecoder.decodeObject(
                                 data
-                            )
-                        )
+                            ),
+                            T::class
+                        ) as T
                     } else {
                         throw IllegalArgumentException("Unsupported type '${T::class}', it must be basic types or data class")
                     }
@@ -191,7 +193,7 @@ class KalmiaRocksDB(val database: RocksDB, private val name: String) {
     inline operator fun <reified T : Any> set(key: ByteArray, value: T) {
         synchronized(this) {
             if (T::class.isData) {
-                val any = JSONCodec.encode<T>(value)
+                val any = JSONEncoder.encodeData<T>(value)
                 this.database.put(
                     key,
                     JSONBinaryEncoder.encode(any)
