@@ -1,4 +1,4 @@
-import com.github.cao.awa.kalmia.rocksdb.db.KalmiaRocksDB
+import com.github.kusa233.kalmia.rocksdb.db.KalmiaRocksDB
 
 object Test {
     @JvmStatic
