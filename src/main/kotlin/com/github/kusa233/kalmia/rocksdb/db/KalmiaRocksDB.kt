@@ -11,6 +11,8 @@ import org.apache.logging.log4j.Logger
 import org.rocksdb.*
 import java.io.File
 import java.nio.charset.StandardCharsets
+import kotlin.reflect.KClass
+import kotlin.reflect.KType
 
 class KalmiaRocksDB(val database: RocksDB, private val name: String) {
     companion object {
@@ -159,10 +161,23 @@ class KalmiaRocksDB(val database: RocksDB, private val name: String) {
         return get(key.toByteArray(StandardCharsets.UTF_8))
     }
 
-    inline operator fun <reified T> get(key: ByteArray): T? {
+    inline operator fun <reified T : Any> get(key: ByteArray): T? {
+        return get(key, T::class)
+    }
+
+    @Suppress("unchecked_cast")
+    operator fun <T : Any> get(key: ByteArray, type: KClass<T>): T? {
         synchronized(this) {
-            val data = this.database[key]
-            return when (T::class) {
+            val data = this.database[key] ?: return null
+            if (type.isData) {
+                return JSONDecoder.decodeDataClass(
+                    JSONBinaryDecoder.decodeObject(
+                        data
+                    ),
+                    type
+                ) as T
+            }
+            return when (type) {
                 String::class -> String(data, StandardCharsets.UTF_8)
                 Boolean::class -> data[0].toInt() == 0x01
                 Byte::class -> data[0]
@@ -171,16 +186,7 @@ class KalmiaRocksDB(val database: RocksDB, private val name: String) {
                 Int::class -> Base256.intFromBuf(data)
                 Long::class -> Base256.longFromBuf(data)
                 else -> {
-                    if (T::class.isData) {
-                        JSONDecoder.decodeDataClass(
-                            JSONBinaryDecoder.decodeObject(
-                                data
-                            ),
-                            T::class
-                        ) as T
-                    } else {
-                        throw IllegalArgumentException("Unsupported type '${T::class}', it must be basic types or data class")
-                    }
+                    throw IllegalArgumentException("Unsupported type '$type', it must be basic types or data class")
                 }
             } as? T
         }
