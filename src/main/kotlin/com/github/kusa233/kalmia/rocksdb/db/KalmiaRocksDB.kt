@@ -34,104 +34,14 @@ class KalmiaRocksDB(val database: RocksDB, private val name: String) {
         }
 
         fun open(
-            name: String,
-            blockCache: LRUCache = buildDefaultLRU(),
-            cfDescriptors: List<ColumnFamilyDescriptor> = listOf(
-                ColumnFamilyDescriptor(RocksDB.DEFAULT_COLUMN_FAMILY, buildDefaultCf(blockCache)),
-            ),
-            cfHandles: List<ColumnFamilyHandle> = listOf()
-        ): KalmiaRocksDB {
-            val writeBufferManager = WriteBufferManager(
-                1024 * 1024 * 1024,
-                blockCache
-            )
-
-            return open(
-                name,
-                DBOptions().apply {
-                    setCreateIfMissing(true)
-                    setCreateMissingColumnFamilies(true)
-
-                    setMaxBackgroundJobs(8)
-                    setBytesPerSync(1 shl 20)
-                    setMaxOpenFiles(-1)
-
-                    setWriteBufferManager(writeBufferManager)
-                    setDbWriteBufferSize(0)
-
-                    // WAL.
-                    setMaxTotalWalSize(512L * 1024 * 1024)
-                    setWalTtlSeconds(3600)
-                    setWalSizeLimitMB(1024)
-
-                    setUseFsync(false)
-
-                    setAtomicFlush(true)
-
-                    // Write optimization.
-                    setTwoWriteQueues(true)
-                    setAllowConcurrentMemtableWrite(true)
-                    setEnableWriteThreadAdaptiveYield(true)
-                    setEnablePipelinedWrite(true)
-
-                    // Recovery policy.
-                    setAvoidFlushDuringRecovery(true)
-                    setAvoidFlushDuringShutdown(false)
-
-                    // Log and stats.
-                    setInfoLogLevel(InfoLogLevel.INFO_LEVEL)
-                    setStatsDumpPeriodSec(60)
-                },
-                cfDescriptors,
-                cfHandles
-            )
-        }
-
-        fun buildDefaultLRU(): LRUCache {
-            return LRUCache(
-                512 * 1024 * 1024,
-                -1,
-                false,
-                20.0
-            )
-        }
-
-        fun buildDefaultCf(blockCache: LRUCache): ColumnFamilyOptions {
-            val table: BlockBasedTableConfig? = BlockBasedTableConfig()
-                .setBlockCache(blockCache)
-                .setBlockSize(4 * 1024)
-                .setCacheIndexAndFilterBlocks(true)
-                .setCacheIndexAndFilterBlocksWithHighPriority(true)
-                .setFilterPolicy(BloomFilter(10.0, false))
-                .setFormatVersion(6)
-
-            return ColumnFamilyOptions()
-                .setTableFormatConfig(table)
-                .setCompressionType(CompressionType.LZ4_COMPRESSION)
-                .setCompactionStyle(CompactionStyle.LEVEL)
-                .setLevelCompactionDynamicLevelBytes(true)
-                .setWriteBufferSize(8L * 1024 * 1024)
-                .setMaxWriteBufferNumber(2)
-                .setTargetFileSizeBase(16L * 1024 * 1024)
-                .setMaxBytesForLevelBase(32L * 1024 * 1024)
-                .setMaxBytesForLevelMultiplier(10.0)
-        }
-
-        fun open(
-            name: String,
-            options: DBOptions,
-            cfDescriptors: List<ColumnFamilyDescriptor>,
-            cfHandles: List<ColumnFamilyHandle>
+            name: String
         ): KalmiaRocksDB {
             if (REAL_INSTANCES[name] == null) {
                 val file = File("databases/$name")
                 file.parentFile.mkdirs()
                 val db = KalmiaRocksDB(
                     RocksDB.open(
-                        options,
                         file.absolutePath,
-                        cfDescriptors,
-                        cfHandles
                     ), name
                 )
                 REAL_INSTANCES[name] = db
