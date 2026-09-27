@@ -108,7 +108,7 @@ class KalmiaRocksDB(val database: RocksDB, private val name: String) {
 
     inline operator fun <reified T : Any> set(key: ByteArray, value: T) {
         synchronized(this) {
-            if (T::class.isData) {
+            if (value::class.isData) {
                 val any = JSONEncoder.encodeData<T>(value)
                 this.database.put(
                     key,
