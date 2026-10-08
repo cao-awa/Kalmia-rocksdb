@@ -1,4 +1,4 @@
 {
     "name": "kalmia-rocksdb",
-    "entrypoint": "com.github.cao.awa.kalmia.rocksdb.entrypoint.RocksDBPluginBootstrap#init"
+    "entrypoint": "com.github.kusa233.kalmia.rocksdb.entrypoint.RocksDBPluginBootstrap#init"
 }

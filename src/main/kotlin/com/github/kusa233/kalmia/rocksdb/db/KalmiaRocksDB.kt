@@ -4,6 +4,7 @@ import com.github.cao.awa.cason.binary.decoder.JSONBinaryDecoder
 import com.github.cao.awa.cason.binary.encoder.JSONBinaryEncoder
 import com.github.cao.awa.cason.codec.decoder.JSONDecoder
 import com.github.cao.awa.cason.codec.encoder.JSONEncoder
+import com.github.cao.awa.cason.serialize.parser.JSONParser
 import com.github.cao.awa.cason.util.math.Base256
 import com.github.kusa233.kalmia.plugin.registerCleaner
 import org.apache.logging.log4j.LogManager
@@ -81,11 +82,11 @@ class KalmiaRocksDB(val database: RocksDB, private val name: String) {
             val data = this.database[key] ?: return null
             if (type.isData) {
                 return JSONDecoder.decodeDataClass(
-                    JSONBinaryDecoder.decodeObject(
-                        data
+                    JSONParser.parseObject(
+                        String(data, StandardCharsets.UTF_8)
                     ),
                     type
-                ) as T
+                )
             }
             return when (type) {
                 String::class -> String(data, StandardCharsets.UTF_8)
@@ -109,10 +110,9 @@ class KalmiaRocksDB(val database: RocksDB, private val name: String) {
     inline operator fun <reified T : Any> set(key: ByteArray, value: T) {
         synchronized(this) {
             if (value::class.isData) {
-                val any = JSONEncoder.encodeData<T>(value)
                 this.database.put(
                     key,
-                    JSONBinaryEncoder.encode(any)
+                    JSONEncoder.encodeData(value).toString().toByteArray(StandardCharsets.UTF_8)
                 )
             } else {
                 when (value) {
